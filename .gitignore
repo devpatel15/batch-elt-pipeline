@@ -1,0 +1,44 @@
+# Raw landing zone (data, not code)
+/raw/
+*.json.gz
+*.part
+!tests/fixtures/**/*.json.gz
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+
+# dbt
+dbt_project/target/
+dbt_project/dbt_packages/
+dbt_project/logs/
+dbt_project/.user.yml
+
+# Great Expectations (great_expectations/gx/.gitignore also covers uncommitted/ directly)
+great_expectations/gx/uncommitted/
+
+# Airflow
+logs/
+airflow.cfg
+airflow.db
+
+# Terraform
+terraform/.terraform/
+terraform/*.tfstate
+terraform/*.tfstate.backup
+terraform/terraform.tfvars
+
+# Secrets / credentials
+*.json.key
+service-account*.json
+secrets/
+.env
+
+# OS
+.DS_Store
+
+# IDE
+*.code-workspace
