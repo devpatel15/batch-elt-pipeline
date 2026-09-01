@@ -1,0 +1,30 @@
+name: 'gharchive_elt'
+version: '1.0.0'
+config-version: 2
+
+profile: 'gharchive_elt'
+
+model-paths: ["models"]
+test-paths: ["tests"]
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+models:
+  gharchive_elt:
+    staging:
+      +materialized: view
+      +schema: staging
+    intermediate:
+      +materialized: view
+      +schema: intermediate
+    marts:
+      # Table in prod (the only place anything reads from marts for real -
+      # Metabase points at dbt_prod_marts). View in dev, where PRs rebuild
+      # this on every run: a BigQuery view costs no storage at all, it's
+      # just a saved query, so dev's marts and prod's marts can coexist
+      # without doubling the ~1.5GB a materialized copy costs, which
+      # otherwise would push this project's total usage right up against
+      # BigQuery's 10GB free-tier storage cap.
+      +materialized: "{{ 'table' if target.name == 'prod' else 'view' }}"
+      +schema: marts

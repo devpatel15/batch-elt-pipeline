@@ -1,0 +1,48 @@
+version: 2
+
+models:
+  - name: dim_repo
+    description: One row per repository seen in the events stream.
+    columns:
+      - name: repo_id
+        tests:
+          - unique
+          - not_null
+
+  - name: dim_actor
+    description: One row per GitHub user/bot seen in the events stream.
+    columns:
+      - name: actor_id
+        tests:
+          - unique
+          - not_null
+
+  - name: fct_events
+    description: One row per GH Archive event, incrementally loaded by created_at.
+    columns:
+      - name: event_id
+        tests:
+          - unique
+          - not_null
+      - name: repo_id
+        tests:
+          - relationships:
+              arguments:
+                to: ref('dim_repo')
+                field: repo_id
+      - name: actor_id
+        tests:
+          - relationships:
+              arguments:
+                to: ref('dim_actor')
+                field: actor_id
+
+  - name: agg_daily_repo_activity
+    description: Daily per-repo activity counts, rolled up from fct_events.
+    columns:
+      - name: activity_date
+        tests:
+          - not_null
+      - name: repo_id
+        tests:
+          - not_null

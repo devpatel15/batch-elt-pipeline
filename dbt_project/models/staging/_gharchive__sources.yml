@@ -1,0 +1,21 @@
+version: 2
+
+sources:
+  - name: gharchive
+    database: "{{ env_var('GCP_PROJECT_ID') }}"
+    schema: raw_gharchive
+    tables:
+      - name: events
+        description: >
+          Raw GH Archive events, loaded one day-partition at a time by
+          ingestion/load_to_bigquery.py. actor/repo/org are structured RECORDs;
+          payload is a native JSON column since its shape varies by event type.
+        config:
+          loaded_at_field: created_at
+        columns:
+          - name: id
+            description: GitHub's globally unique event ID.
+          - name: type
+            description: Event type, e.g. PushEvent, PullRequestEvent, WatchEvent.
+          - name: created_at
+            description: UTC timestamp the event was recorded by GitHub.

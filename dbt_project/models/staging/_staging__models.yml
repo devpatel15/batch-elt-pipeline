@@ -1,0 +1,41 @@
+version: 2
+
+models:
+  - name: stg_gharchive_events
+    description: >
+      Cleaned, typed GH Archive events with structured actor/repo/org fields.
+      `payload` is passed through untouched (native JSON) for the intermediate
+      layer to flatten per event type.
+    columns:
+      - name: event_id
+        tests:
+          - unique
+          - not_null
+      - name: event_type
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - CommitCommentEvent
+                  - CreateEvent
+                  - DeleteEvent
+                  - DiscussionEvent
+                  - DiscussionCommentEvent
+                  - ForkEvent
+                  - GollumEvent
+                  - IssueCommentEvent
+                  - IssuesEvent
+                  - MemberEvent
+                  - PublicEvent
+                  - PullRequestEvent
+                  - PullRequestReviewEvent
+                  - PullRequestReviewCommentEvent
+                  - PullRequestReviewThreadEvent
+                  - PushEvent
+                  - ReleaseEvent
+                  - SponsorshipEvent
+                  - WatchEvent
+      - name: created_at
+        tests:
+          - not_null
