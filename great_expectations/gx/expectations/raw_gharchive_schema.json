@@ -1,0 +1,26 @@
+{
+  "data_asset_type": null,
+  "expectation_suite_name": "raw_gharchive_schema",
+  "expectations": [
+    {
+      "expectation_type": "expect_table_columns_to_match_set",
+      "kwargs": {
+        "column_set": [
+          "id",
+          "type",
+          "actor",
+          "repo",
+          "payload",
+          "public",
+          "created_at"
+        ],
+        "exact_match": false
+      },
+      "meta": {}
+    }
+  ],
+  "ge_cloud_id": null,
+  "meta": {
+    "great_expectations_version": "0.18.22"
+  }
+}

@@ -1,0 +1,73 @@
+{
+  "data_asset_type": null,
+  "expectation_suite_name": "raw_gharchive_quality",
+  "expectations": [
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "id",
+        "mostly": 0.99
+      },
+      "meta": {}
+    },
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "type",
+        "mostly": 0.99
+      },
+      "meta": {}
+    },
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "created_at",
+        "mostly": 0.99
+      },
+      "meta": {}
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "created_at",
+        "max_value": "2024-01-02 06:00:00+00:00",
+        "min_value": "2023-12-31 18:00:00+00:00",
+        "mostly": 0.99
+      },
+      "meta": {}
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_in_set",
+      "kwargs": {
+        "column": "type",
+        "mostly": 0.99,
+        "value_set": [
+          "CommitCommentEvent",
+          "CreateEvent",
+          "DeleteEvent",
+          "DiscussionEvent",
+          "DiscussionCommentEvent",
+          "ForkEvent",
+          "GollumEvent",
+          "IssueCommentEvent",
+          "IssuesEvent",
+          "MemberEvent",
+          "PublicEvent",
+          "PullRequestEvent",
+          "PullRequestReviewEvent",
+          "PullRequestReviewCommentEvent",
+          "PullRequestReviewThreadEvent",
+          "PushEvent",
+          "ReleaseEvent",
+          "SponsorshipEvent",
+          "WatchEvent"
+        ]
+      },
+      "meta": {}
+    }
+  ],
+  "ge_cloud_id": null,
+  "meta": {
+    "great_expectations_version": "0.18.22"
+  }
+}
