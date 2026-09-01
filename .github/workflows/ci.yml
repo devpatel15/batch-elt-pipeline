@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+
+jobs:
+  test:
+    name: Unit tests + data quality gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt -r requirements-airflow.txt
+
+      - name: Run unit tests
+        run: pytest tests/ -v
+
+      - name: Validate Great Expectations gate against fixture data
+        # No BigQuery credentials needed: validate_raw_events.py only ever
+        # reads local files. This exercises the real gate code path against a
+        # small committed fixture (tests/fixtures/raw/) instead of a full day
+        # of real GH Archive data, which would need network access and be
+        # slow/flaky in CI.
+        run: |
+          python great_expectations/validate_raw_events.py \
+            --date 2024-01-01 --raw-dir tests/fixtures/raw
+
+  dbt:
+    name: dbt build against BigQuery (dev)
+    runs-on: ubuntu-latest
+    needs: test
+    # PR-only: this validates changes against the dev target (views, so it's
+    # cheap to rebuild on every push to a PR branch) before merge. Deploying
+    # to prod happens separately in cd.yml, on push to master only, so a
+    # push here doesn't also trigger a second, redundant dev build.
+    # Only runs with repo secrets available (not on forked-repo PRs, which
+    # GitHub withholds secrets from for security) - see README for the
+    # GCP_PROJECT_ID / GCP_SERVICE_ACCOUNT_KEY secrets this job needs.
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements-airflow.txt
+
+      - name: Write service account key
+        run: echo '${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}' > "${{ runner.temp }}/gcp-key.json"
+
+      - name: dbt build
+        working-directory: dbt_project
+        env:
+          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/gcp-key.json
+          DBT_PROFILES_DIR: .
+        run: dbt build
