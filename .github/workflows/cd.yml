@@ -1,0 +1,74 @@
+name: CD
+
+# Push to master only, never PRs: this applies real infrastructure changes
+# and promotes models to the prod dataset Metabase actually reads from, so
+# it must never run against unmerged code.
+on:
+  push:
+    branches: [master]
+
+permissions:
+  contents: write # needed to push the built docs site to the gh-pages branch
+
+jobs:
+  deploy:
+    name: Apply infra + promote dbt to prod + publish docs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Write service account key
+        run: echo '${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}' > "${{ runner.temp }}/gcp-key.json"
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          cli_config_credentials_token: ${{ secrets.TF_TOKEN_app_terraform_io }}
+
+      - name: Terraform init
+        working-directory: terraform
+        run: terraform init
+
+      - name: Terraform apply
+        working-directory: terraform
+        env:
+          TF_VAR_project_id: ${{ secrets.GCP_PROJECT_ID }}
+          TF_VAR_credentials_file: ${{ runner.temp }}/gcp-key.json
+        run: terraform apply -auto-approve
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements-airflow.txt
+
+      - name: dbt run (prod)
+        working-directory: dbt_project
+        env:
+          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/gcp-key.json
+          DBT_PROFILES_DIR: .
+        run: dbt run --target prod
+
+      - name: dbt test (prod)
+        working-directory: dbt_project
+        env:
+          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/gcp-key.json
+          DBT_PROFILES_DIR: .
+        run: dbt test --target prod
+
+      - name: dbt docs generate (prod)
+        working-directory: dbt_project
+        env:
+          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/gcp-key.json
+          DBT_PROFILES_DIR: .
+        run: dbt docs generate --target prod
+
+      - name: Publish dbt docs to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: dbt_project/target
+          publish_branch: gh-pages
